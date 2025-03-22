@@ -1,0 +1,22 @@
+[
+  {
+    "proxy": "103.28.36.215:3128",
+    "status": "Không hoạt động",
+    "speed": "-"
+  },
+  {
+    "proxy": "134.209.29.120:3128:myuser:mypassword",
+    "status": "Không hoạt động",
+    "speed": "-"
+  },
+  {
+    "proxy": "171.224.79.180",
+    "status": "Không hoạt động",
+    "speed": "-"
+  },
+  {
+    "proxy": "27.65.242.28",
+    "status": "Không hoạt động",
+    "speed": "-"
+  }
+]

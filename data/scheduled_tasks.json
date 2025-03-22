@@ -1,0 +1,13 @@
+[
+  {
+    "name": "học tiếng anh",
+    "run_time": "2025-03-16 02:10",
+    "script": "d:\\ProjectGDU\\Python\\CuoiKi\\selenium_automation_hub\\scripts\\aaa.py",
+    "enabled": true,
+    "recurring": "daily",
+    "parameters": {},
+    "id": "task_1742065809",
+    "status": "Completed",
+    "last_run": "2025-03-18 01:57:51"
+  }
+]
