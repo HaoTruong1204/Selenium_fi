@@ -76,6 +76,10 @@ class MainWindow(QMainWindow):
             self.init_menu()
             self.init_statusbar()
             
+            # Initialize automation worker
+            if not self.init_automation_worker():
+                raise Exception("Không thể khởi tạo automation worker")
+            
             # Show splash screen
             self.init_splash_screen()
             
@@ -1097,6 +1101,74 @@ class MainWindow(QMainWindow):
         except Exception as e:
             print(f"Error logging debug message: {str(e)}")
             traceback.print_exc()
+
+    def init_automation_worker(self):
+        """Khởi tạo automation worker với cấu hình từ settings"""
+        try:
+            # Lấy cấu hình từ settings
+            chrome_config = {
+                "chrome_path": self.settings.value("brave_path", ""),
+                "profile_path": self.settings.value("brave_profile", ""),
+                "headless": self.settings.value("headless_mode", False, type=bool),
+                "proxy": self.settings.value("proxy", ""),
+                "delay": self.settings.value("delay", 0.0, type=float)
+            }
+            
+            # Khởi tạo worker
+            self.automation_worker = EnhancedAutomationWorker(
+                chrome_config=chrome_config,
+                headless=chrome_config["headless"],
+                proxy=chrome_config["proxy"],
+                delay=chrome_config["delay"]
+            )
+            
+            # Kết nối signals
+            self.automation_worker.log_signal.connect(self.log_info)
+            self.automation_worker.error_signal.connect(self.log_error)
+            self.automation_worker.progress_signal.connect(self.update_progress)
+            self.automation_worker.result_signal.connect(self.handle_automation_result)
+            self.automation_worker.finished_signal.connect(self.handle_automation_finished)
+            
+            self.log_info("✅ Đã khởi tạo automation worker thành công")
+            return True
+            
+        except Exception as e:
+            self.log_error(f"❌ Lỗi khởi tạo automation worker: {str(e)}")
+            return False
+
+    def handle_automation_result(self, result):
+        """Xử lý kết quả từ automation worker"""
+        try:
+            if result:
+                self.log_info("✅ Automation task completed successfully")
+                # TODO: Xử lý kết quả cụ thể tùy theo loại task
+            else:
+                self.log_error("❌ Automation task failed")
+        except Exception as e:
+            self.log_error(f"❌ Lỗi xử lý kết quả automation: {str(e)}")
+
+    def handle_automation_finished(self, success):
+        """Xử lý khi automation worker hoàn thành"""
+        try:
+            if success:
+                self.log_info("✅ Automation process finished successfully")
+            else:
+                self.log_error("❌ Automation process failed")
+            
+            # Reset UI
+            self.progress_bar.setValue(0)
+            self.statusBar().showMessage("Ready")
+            
+        except Exception as e:
+            self.log_error(f"❌ Lỗi xử lý kết thúc automation: {str(e)}")
+
+    def update_progress(self, value):
+        """Cập nhật thanh tiến trình"""
+        try:
+            self.progress_bar.setValue(value)
+            self.statusBar().showMessage(f"Progress: {value}%")
+        except Exception as e:
+            self.log_error(f"❌ Lỗi cập nhật tiến trình: {str(e)}")
 
 if __name__ == "__main__":
     import sys

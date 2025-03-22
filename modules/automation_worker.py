@@ -90,57 +90,57 @@ class EnhancedAutomationWorker(QThread):
             if not brave_path or not os.path.exists(brave_path):
                 raise Exception(f"Không tìm thấy Brave tại: {brave_path}")
 
+            # Khởi tạo Chrome options
             options = Options()
-            
-            # Thiết lập đường dẫn Brave
             options.binary_location = brave_path
             
             # Thiết lập profile
             if self.chrome_config.get("profile_path"):
                 user_data_dir = os.path.dirname(self.chrome_config['profile_path'])
-                profile_dir = os.path.basename(self.chrome_config['profile_path'])
-                
-                if not os.path.exists(user_data_dir):
-                    os.makedirs(user_data_dir, exist_ok=True)
-                    
-                options.add_argument(f"--user-data-dir={user_data_dir}")
-                options.add_argument(f"--profile-directory={profile_dir}")
-
-            # Thêm các tham số đặc biệt cho Brave
-            for arg in self.chrome_config.get("brave_specific_args", []):
-                options.add_argument(arg)
-
-            # Thêm các tùy chọn bổ sung
-            if self.headless:
-                options.add_argument("--headless=new")
+                profile_directory = os.path.basename(self.chrome_config['profile_path'])
+                options.add_argument(f'--user-data-dir={user_data_dir}')
+                options.add_argument(f'--profile-directory={profile_directory}')
             
+            # Thiết lập các options cơ bản
+            options.add_argument('--start-maximized')
+            options.add_argument('--disable-gpu')
+            options.add_argument('--no-sandbox')
+            options.add_argument('--disable-dev-shm-usage')
+            options.add_argument('--disable-notifications')
+            options.add_argument('--disable-infobars')
+            options.add_argument('--ignore-certificate-errors')
+            
+            # Thêm các options nâng cao
+            options.add_argument('--disable-blink-features=AutomationControlled')
+            options.add_argument('--disable-features=IsolateOrigins,site-per-process')
+            options.add_argument('--disable-site-isolation-trials')
+            options.add_argument('--disable-web-security')
+            options.add_argument('--allow-running-insecure-content')
+            
+            # Thêm proxy nếu có
             if self.proxy:
                 options.add_argument(f'--proxy-server={self.proxy}')
-
-            # Thêm các tham số để tránh phát hiện automation
-            options.add_experimental_option("excludeSwitches", ["enable-automation"])
-            options.add_experimental_option('useAutomationExtension', False)
-            options.add_argument("--disable-blink-features=AutomationControlled")
-
-            # Khởi tạo driver
-            service = Service(ChromeDriverManager().install())
-            self.driver = webdriver.Chrome(service=service, options=options)
             
-            # Thiết lập timeout mặc định
+            # Thêm headless mode nếu được yêu cầu
+            if self.headless:
+                options.add_argument('--headless')
+            
+            # Khởi tạo service với ChromeDriverManager
+            service = Service(ChromeDriverManager().install())
+            
+            # Khởi tạo driver
+            self.driver = webdriver.Chrome(service=service, options=options)
+            self.driver.set_window_size(1920, 1080)
+            
+            # Thiết lập timeout
             self.driver.set_page_load_timeout(30)
             self.driver.implicitly_wait(10)
-            
-            # Tối đa hóa cửa sổ
-            self.driver.maximize_window()
-            
-            # Kiểm tra xem driver có hoạt động không
-            self.driver.current_window_handle
             
             self.log_signal.emit("✅ Khởi tạo trình duyệt thành công")
             return True
             
         except Exception as e:
-            self.log_signal.emit(f"❌ Lỗi khởi tạo trình duyệt: {str(e)}")
+            self.error_signal.emit(f"❌ Lỗi khởi tạo trình duyệt: {str(e)}")
             if self.driver:
                 try:
                     self.driver.quit()
